@@ -1,70 +1,97 @@
+#!/usr/bin/env python
+# coding: UTF-8
+
 from lxml import etree
 import re
 import sys
+import codecs
 
-mxml = etree.parse('model2.xml').getroot()
+with codecs.open(sys.argv[1],mode='r',encoding='shiftjis') as file:
+	lines = file.read()
+with codecs.open("dummy.xml",mode='w',encoding='utf-8') as file:
+	for line in lines:
+		line.encode('utf-8')
+		#print line
+		#print type(line)
+		file.write(line)
+
+#ifile = unicode(sys.argv[1], encoding='shift-jis')
+mxml = etree.parse(sys.argv[2]).getroot()
 mtree = etree.ElementTree(mxml)
-sxml = etree.parse(sys.argv[1]).getroot()
+sxml = etree.parse('dummy.xml').getroot()
 stree = etree.ElementTree(sxml)
 
 #mtag = [(mtree.getpath(m)).split("/") for m in mxml.iter()]
 #stag = [(stree.getpath(s)).split("/") for s in sxml.iter()]
 mtag = [('%s/%s' % (mtree.getpath(m),m.text)).split("/") for m in mxml.iter()]
 stag = [('%s/%s' % (stree.getpath(s),s.text)).split("/") for s in sxml.iter()]
-#print stag
 pattern = re.compile("\[\d\]")
+
+#initialize
 mmtag = []
 sstag = []
-
 tab_list = []
-blist = []
+
 for a in mtag:
 	m_off_list = []
 	if "TOKEN" in a:
-		blist = [a[-3].upper(),a[-2].upper(),a[-1].upper()]
+		m_off_list = []
+		a = [pattern.sub('',tempstr) for tempstr in a]
 		if "column_name" in a:
-			blist.pop()
-		if "table_alias" in a:
-			blist.pop()
+			a.pop()
 		if "table_name" in a:
 			if "result_column" not in a:
 				try:
 					tab_list.index(a[-1])
-					#print repr(1)
-					tabname = "tab"+repr(tab_list.index(a[-1]))
+					a[-1] = "tabs"
+
+
 				except ValueError:
 					tab_list.append(a[-1])
-					tabname = "tab"+repr(len(tab_list)-1)
-				blist[-1] = tabname
-				#print a
-		blist = [pattern.sub('',str) for str in blist]
-		mmtag.append(blist)
+					a[-1] = "tab1"
+		if "table_alias" in a:
+			a.pop()	#Table_alias値を削除
+
+
+		if "literal_value" in a:
+			del a[a.index("TOKEN")+1:]	#配列からliteral値を削除
+
+		for x in a:
+			if x not in ['expr', 'select_stmt', 'select_or_values', 'table_or_subquery', 'join_clause']:
+				m_off_list.append(x)
+		mmtag.append(m_off_list)
 
 tab_list = []
-blist = []
 for a in stag:
 	if "TOKEN" in a:
-		blist = [a[-3].upper(),a[-2].upper(),a[-1].upper()]
+		s_off_list = []
+		a = [pattern.sub('',tempstr) for tempstr in a]
 		if "column_name" in a:
-			blist.pop()
-		if "table_alias" in a:
-			blist.pop()
+			a.pop()
 		if "table_name" in a:
 			if "result_column" not in a:
 				try:
 					tab_list.index(a[-1])
-					#print repr(1)
-					tabname = "tab"+repr(tab_list.index(a[-1]))
+					a[-1] = "tabs"
+
+
 				except ValueError:
 					tab_list.append(a[-1])
-					tabname = "tab"+repr(len(tab_list)-1)
-				blist[-1] = tabname
-				#print a
-		blist = [pattern.sub('',str) for str in blist]
-		sstag.append(blist)
+					a[-1] = "tab1"
+		if "table_alias" in a:
+			a.pop()	#Table_alias値を削除
+
+
+		if "literal_value" in a:
+			del a[a.index("TOKEN")+1:]	#配列からliteral値を削除
+
+		for x in a:
+			if x not in ['expr', 'select_stmt', 'select_or_values', 'table_or_subquery', 'join_clause']:
+				s_off_list.append(x)
+		sstag.append(s_off_list)
 
 matched_list=[tag for tag in mmtag if tag in sstag]
-#for a in mmtag:
-#	print a
+for a in sstag:
+	print a
 print mmtag == matched_list
 
