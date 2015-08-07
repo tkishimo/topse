@@ -100,19 +100,15 @@ if __name__ == '__main__':
 	files = glob.glob("F:/nii/test/*.xml")
 	for file in files:
 		tf = []
-		tf_flg = chksql(file,"F:/nii/report/model2.xml")
+		tf_flg = chksql(file,"F:/nii/report/model2.xml") #select .. from tab,(select max(col1) from tab)
 		tf.append(tf_flg)
-		tf_flg = chksql(file,"F:/nii/report/model3.xml")
+		tf_flg = chksql(file,"F:/nii/report/model3.xml") #select .. from tab where col1 = (select max(col1)..
 		tf.append(tf_flg)
-		tf_flg = chksql(file,"F:/nii/report/model4.xml")
+		tf_flg = chksql(file,"F:/nii/report/model4.xml") #select .. from tab where col1 = (select col1 from tab)
 		tf.append(tf_flg)
-		tf_flg = chksql(file,"F:/nii/report/model5.xml")
+		tf_flg = chksql(file,"F:/nii/report/model7.xml") #select .. from tab where col1 = (select min(col1)..
 		tf.append(tf_flg)
-		tf_flg = chksql(file,"F:/nii/report/model6.xml")
-		tf.append(tf_flg)
-		tf_flg = chksql(file,"F:/nii/report/model7.xml")
-		tf.append(tf_flg)
-		tf_flg = chksql(file,"F:/nii/report/model8.xml")
+		tf_flg = chksql(file,"F:/nii/report/model8.xml") #select .. union select ..
 		tf.append(tf_flg)
 		print file+":"+str(max(tf))
 
