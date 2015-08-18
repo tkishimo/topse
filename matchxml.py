@@ -25,7 +25,7 @@ def chksql(arg1,arg2):
 	#stag = [(stree.getpath(s)).split("/") for s in sxml.iter()]
 	mtag = [('%s/%s' % (mtree.getpath(m),m.text)).split("/") for m in mxml.iter()]
 	stag = [('%s/%s' % (stree.getpath(s),s.text)).split("/") for s in sxml.iter()]
-	pattern = re.compile("\[\d\]")
+	pattern = re.compile("\[\d+\]")
 
 	#initialize
 	mmtag = []
@@ -50,14 +50,14 @@ def chksql(arg1,arg2):
 						tab_list.append(a[-1])
 						a[-1] = "tab1"
 			if "table_alias" in a:
-				a.pop()	#Table_alias蛟､繧貞炎髯､
+				a.pop()	#Table_alias値を削除
 
 
 			if "literal_value" in a:
-				del a[a.index("TOKEN")+1:]	#驟榊�励°繧瑛iteral蛟､繧貞炎髯､
+				del a[a.index("TOKEN")+1:]	#配列からliteral値を削除
 
 			for x in a:
-				if x not in ['expr', 'select_stmt', 'select_or_values', 'table_or_subquery', 'join_clause', 'common_table_expression', 'select_core']:
+				if x not in ['expr', 'select_stmt', 'select_or_values', 'table_or_subquery', 'join_clause', 'common_table_expression', 'select_core', 'join_constraint', 'factored_select_stmt', 'insert_stmt']:
 					m_off_list.append(x)
 			mmtag.append(m_off_list)
 
@@ -79,14 +79,14 @@ def chksql(arg1,arg2):
 						tab_list.append(a[-1])
 						a[-1] = "tab1"
 			if "table_alias" in a:
-				a.pop()	#Table_alias蛟､繧貞炎髯､
+				a.pop()	#Table_alias値を削除
 
 
 			if "literal_value" in a:
-				del a[a.index("TOKEN")+1:]	#驟榊�励°繧瑛iteral蛟､繧貞炎髯､
+				del a[a.index("TOKEN")+1:]	#配列からliteral値を削除
 
 			for x in a:
-				if x not in ['expr', 'select_stmt', 'select_or_values', 'table_or_subquery', 'join_clause', 'common_table_expression', 'select_core']:
+				if x not in ['expr', 'select_stmt', 'select_or_values', 'table_or_subquery', 'join_clause', 'common_table_expression', 'select_core', 'join_constraint', 'factored_select_stmt', 'insert_stmt']:
 					s_off_list.append(x)
 			sstag.append(s_off_list)
 
@@ -110,5 +110,6 @@ if __name__ == '__main__':
 		tf.append(tf_flg)
 		tf_flg = chksql(file,"F:/nii/report/model8.xml") #select .. union select ..
 		tf.append(tf_flg)
+		tf_flg = chksql(file,"F:/nii/report/model9.xml") #SELECT COL2 FROM TAB1 A,TAB1 B WHERE A.COL1=B.COL1
+		tf.append(tf_flg)
 		print file+":"+str(max(tf))
-
