@@ -25,12 +25,14 @@ def chksql(arg1,arg2):
 	#stag = [(stree.getpath(s)).split("/") for s in sxml.iter()]
 	mtag = [('%s/%s' % (mtree.getpath(m),m.text)).split("/") for m in mxml.iter()]
 	stag = [('%s/%s' % (stree.getpath(s),s.text)).split("/") for s in sxml.iter()]
-	pattern = re.compile("\[\d+\]")
+	pattern = re.compile("¥[¥d+¥]")
 
 	#initialize
 	mmtag = []
 	sstag = []
-	tab_list = []
+	tab_dict = {}
+	alias_list = []
+	cnt = 0
 
 	for a in mtag:
 		m_off_list = []
@@ -39,48 +41,61 @@ def chksql(arg1,arg2):
 			a = [pattern.sub('',tempstr) for tempstr in a]
 			if "column_name" in a:
 				a.pop()
+			if "table_alias" in a:
+				alias_list.append(a[-1])
+				a.pop()	#Table_alias値を削除
+			if "column_alias" in a:
+				a.pop()	#Column_alias値を削除
 			if "table_name" in a:
 				if "result_column" not in a:
 					try:
-						tab_list.index(a[-1])
+						v = tab_dict[a[-1]]
+						#print stag[tab_dict[a[-1]]]
+						mmtag[v][-1] = "tabs"
 						a[-1] = "tabs"
-
-
-					except ValueError:
-						tab_list.append(a[-1])
-						a[-1] = "tab1"
-			if "table_alias" in a:
-				a.pop()	#Table_alias値を削除
-
+					except KeyError:
+						if a[-1] in alias_list: #aliasにあればtabsに変換
+							a[-1] = "tabs"
+						else:
+							tab_dict[a[-1]] = cnt
+							a[-1] = "tab"
 
 			if "literal_value" in a:
 				del a[a.index("TOKEN")+1:]	#配列からliteral値を削除
-
 			for x in a:
 				if x not in ['expr', 'select_stmt', 'select_or_values', 'table_or_subquery', 'join_clause', 'common_table_expression', 'select_core', 'join_constraint', 'factored_select_stmt', 'insert_stmt']:
 					m_off_list.append(x)
 			mmtag.append(m_off_list)
+			cnt += 1
 
-	tab_list = []
+	tab_dict = {}
+	alias_list = []
+	cnt = 0
 	for a in stag:
 		if "TOKEN" in a:
 			s_off_list = []
 			a = [pattern.sub('',tempstr) for tempstr in a]
 			if "column_name" in a:
 				a.pop()
+			if "table_alias" in a:
+				alias_list.append(a[-1])
+				a.pop()	#Table_alias値を削除
+
+			if "column_alias" in a:
+				a.pop()	#Column_alias値を削除
 			if "table_name" in a:
 				if "result_column" not in a:
 					try:
-						tab_list.index(a[-1])
+						v = tab_dict[a[-1]]
+						#print stag[tab_dict[a[-1]]]
+						sstag[v][-1] = "tabs"
 						a[-1] = "tabs"
-
-
-					except ValueError:
-						tab_list.append(a[-1])
-						a[-1] = "tab1"
-			if "table_alias" in a:
-				a.pop()	#Table_alias値を削除
-
+					except KeyError:
+						if a[-1] in alias_list: #aliasにあればtabsに変換
+							a[-1] = "tabs"
+						else:
+							tab_dict[a[-1]] = cnt
+							a[-1] = "tab"
 
 			if "literal_value" in a:
 				del a[a.index("TOKEN")+1:]	#配列からliteral値を削除
@@ -89,15 +104,25 @@ def chksql(arg1,arg2):
 				if x not in ['expr', 'select_stmt', 'select_or_values', 'table_or_subquery', 'join_clause', 'common_table_expression', 'select_core', 'join_constraint', 'factored_select_stmt', 'insert_stmt']:
 					s_off_list.append(x)
 			sstag.append(s_off_list)
+			cnt += 1
 
-	matched_list=[tag for tag in mmtag if tag in sstag]
+
+	i = -1
+	matched_list = []
+	for tag in mmtag:
+		while i<=len(sstag)-2:
+			i += 1
+			#print tag
+			if tag==sstag[i]:
+				matched_list.append(tag)
+				break
 
 	flg = mmtag == matched_list
 	#print str(arg1) +":"+ str(arg2) +" "+ str(flg)
 	return flg
 if __name__ == '__main__':
 	import glob
-	files = glob.glob("F:/nii/test0820/*.xml")
+	files = glob.glob("F:/nii/test/*.xml")
 	for file in files:
 		tf = []
 		tf_flg = chksql(file,"F:/nii/report/model2.xml") #select .. from tab,(select max(col1) from tab)
@@ -112,5 +137,10 @@ if __name__ == '__main__':
 		tf.append(tf_flg)
 		tf_flg = chksql(file,"F:/nii/report/model9.xml") #SELECT COL2 FROM TAB1 A,TAB1 B WHERE A.COL1=B.COL1
 		tf.append(tf_flg)
+		tf_flg = chksql(file,"F:/nii/report/model11.xml") #SELECT .. FROM TAB1 INNER JOIN (SELECT ..,MAX(COL1) FROM TAB1) ON ..
+		tf.append(tf_flg)
+		tf_flg = chksql(file,"F:/nii/report/model12.xml") #SELECT .. FROM TAB1 A JOIN TAB1 B ON A.COL1=B.COL1
+		tf.append(tf_flg)
+		tf_flg = chksql(file,"F:/nii/report/model13.xml") #SELECT COL2 FROM TAB2 B INNER JOIN TAB1 A ON A.COL1 = (SELECT MIN(COL1) FROM TAB1)
+		tf.append(tf_flg)
 		print file+":"+str(max(tf))
-
